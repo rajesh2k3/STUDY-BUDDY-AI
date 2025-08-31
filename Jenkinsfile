@@ -16,7 +16,8 @@ pipeline {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                    //dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:v2")
                 }
             }
         }
@@ -25,20 +26,21 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
                     docker.withRegistry('https://registry.hub.docker.com' , "${DOCKER_HUB_CREDENTIALS_ID}") {
-                        dockerImage.push("${IMAGE_TAG}")
+                    //    dockerImage.push("${IMAGE_TAG}")
+                        dockerImage.push("v2")
                     }
                 }
             }
         }
-        stage('Update Deployment YAML with New Tag') {
-            steps {
-                script {
-                    sh """
-                    sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
-                    """
-                }
-            }
-        }
+    //    stage('Update Deployment YAML with New Tag') {
+    //        steps {
+    //            script {
+    //                sh """
+    //                sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+    //                """
+    //            }
+    //        }
+    //    }
     
     //    stage('Commit Updated YAML') {
     //        steps {
