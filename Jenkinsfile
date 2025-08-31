@@ -45,11 +45,11 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh '''
-                        git config user.name "rajeshs79"
+                        git config user.name "rajeshs2k3"
                         git config user.email "sraju2k3@gmail.com"
                         git add manifests/deployment.yaml
                         git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajeshs79/study-buddy-ai.git HEAD:master
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajesh2k3/study-buddy-ai.git HEAD:master
                         '''
                     }
                 }
