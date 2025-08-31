@@ -40,21 +40,21 @@ pipeline {
             }
         }
 
-        stage('Commit Updated YAML') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                        sh '''
-                        git config user.name "rajeshs79"
-                        git config user.email "sraju2k3@gmail.com"
-                        git add manifests/deployment.yaml
-                        git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajeshs79/study-buddy-ai.git HEAD:master
-                        '''
-                    }
-                }
-            }
-        }
+    //    stage('Commit Updated YAML') {
+    //        steps {
+    //            script {
+    //                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+    //                    sh '''
+    //                    git config user.name "rajeshs79"
+    //                    git config user.email "sraju2k3@gmail.com"
+    //                    git add manifests/deployment.yaml
+    //                    git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+    //                    git push https://${GIT_USER}:${GIT_PASS}@github.com/rajeshs79/study-buddy-ai.git HEAD:master
+    //                    '''
+    //                }
+    //            }
+    //        }
+    //    }
         //stage('Install Kubectl & ArgoCD CLI Setup') {
         //    steps {
         //        sh '''
