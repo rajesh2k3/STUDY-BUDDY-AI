@@ -12,24 +12,27 @@ pipeline {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-token', url: 'https://github.com/rajesh2k3/study-buddy-ai.git']])
             }
         }        
+
         stage('Build Docker Image') {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                    def dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
                 }
             }
         }
+
         stage('Push Image to DockerHub') {
             steps {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
                     docker.withRegistry('https://registry.hub.docker.com' , "${DOCKER_HUB_CREDENTIALS_ID}") {
-                        dockerImage.push("${IMAGE_TAG}")
+                        docker.image("${DOCKER_HUB_REPO}:${IMAGE_TAG}").push()
                     }
                 }
             }
         }
+
         stage('Update Deployment YAML with New Tag') {
             steps {
                 script {
@@ -55,21 +58,23 @@ pipeline {
                 }
             }
         }
+
         stage('Install Kubectl & ArgoCD CLI Setup') {
-           steps {
-               sh '''
-               echo "Installing curl, Kubectl & ArgoCD cli..."
-               sudo apt-get update || true
-               sudo apt-get install -y --no-install-recommends gpgv curl wget
-       
-               sudo curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-               sudo chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-       
-               sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-               sudo chmod +x /usr/local/bin/argocd
-               '''
+            steps {
+                sh '''
+                echo "Installing curl, Kubectl & ArgoCD cli..."
+                sudo apt-get update || true
+                sudo apt-get install -y --no-install-recommends gpgv curl wget
+
+                sudo curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                sudo chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
+                sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+                sudo chmod +x /usr/local/bin/argocd
+                '''
             }
         }
+
         stage('Apply Kubernetes & Sync App with ArgoCD') {
             steps {
                 script {
