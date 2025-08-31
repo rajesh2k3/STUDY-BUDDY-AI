@@ -63,14 +63,14 @@ pipeline {
             steps {
                 sh '''
                 echo "Installing curl, Kubectl & ArgoCD cli..."
-                sudo apt-get update || true
-                sudo apt-get install -y --no-install-recommends gpgv curl wget
+                apt-get update || true
+                apt-get install -y --no-install-recommends gpgv curl wget
 
-                sudo curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                sudo chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+                curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                chmod +x kubectl && mv kubectl /usr/local/bin/
 
-                sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-                sudo chmod +x /usr/local/bin/argocd
+                curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+                chmod +x /usr/local/bin/argocd
                 '''
             }
         }
