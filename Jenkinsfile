@@ -16,9 +16,7 @@ pipeline {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    //dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
-                    dockerImage = docker.build("${DOCKER_HUB_REPO}:v2")
-                }
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
             }
         }
         stage('Push Image to DockerHub') {
@@ -26,49 +24,48 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
                     docker.withRegistry('https://registry.hub.docker.com' , "${DOCKER_HUB_CREDENTIALS_ID}") {
-                    //    dockerImage.push("${IMAGE_TAG}")
-                        dockerImage.push("v2")
+                    dockerImage.push("${IMAGE_TAG}")
+                }
+            }
+        }
+        stage('Update Deployment YAML with New Tag') {
+            steps {
+                script {
+                    sh """
+                    sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+                    """
+                }
+            }
+        }
+    
+        stage('Commit Updated YAML') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh '''
+                        git config user.name "rajesh2k3"
+                        git config user.email "sraju2k3@gmail.com"
+                        git add manifests/deployment.yaml
+                        git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajesh2k3/study-buddy-ai.git HEAD:master
+                        '''
                     }
                 }
             }
         }
-    //    stage('Update Deployment YAML with New Tag') {
-    //        steps {
-    //            script {
-    //                sh """
-    //                sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
-    //                """
-    //            }
-    //        }
-    //    }
-    
-    //    stage('Commit Updated YAML') {
-    //        steps {
-    //            script {
-    //                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-    //                    sh '''
-    //                    git config user.name "rajesh2k3"
-    //                    git config user.email "sraju2k3@gmail.com"
-    //                    git add manifests/deployment.yaml
-    //                    git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-    //                    git push https://${GIT_USER}:${GIT_PASS}@github.com/rajesh2k3/study-buddy-ai.git HEAD:master
-    //                    '''
-    //                }
-    //            }
-    //        }
-    //    }
-    //    stage('Install Kubectl & ArgoCD CLI Setup') {
-    //        steps {
-    //            sh '''
-    //            echo 'installing Kubectl & ArgoCD cli...'
-    //            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    //            chmod +x kubectl
-    //            mv kubectl /usr/local/bin/kubectl
-    //            curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-    //            chmod +x /usr/local/bin/argocd
-    //            '''
-    //        }
-    //    }
+        stage('Install Kubectl & ArgoCD CLI Setup') {
+            steps {
+                sh '''
+                echo 'installing Kubectl & ArgoCD cli...'
+                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                chmod +x kubectl
+                mv kubectl /usr/local/bin/kubectl
+                curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+                chmod +x /usr/local/bin/argocd
+                '''
+            }
+        }
+        
         stage('Apply Kubernetes & Sync App with ArgoCD') {
             steps {
                 script {
