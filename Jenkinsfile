@@ -56,18 +56,18 @@ pipeline {
             }
         }
         stage('Install Kubectl & ArgoCD CLI Setup') {
-        steps {
-                sh '''
-                  echo "Installing curl, Kubectl & ArgoCD cli..."
-                  apt-get update && apt-get install -y curl wget
-
-                  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                  chmod +x kubectl
-                  mv kubectl /usr/local/bin/kubectl
-
-                  curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-                  chmod +x /usr/local/bin/argocd
-                  '''
+           steps {
+               sh '''
+               echo "Installing curl, Kubectl & ArgoCD cli..."
+               sudo apt-get update || true
+               sudo apt-get install -y --no-install-recommends gpgv curl wget
+       
+               sudo curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+               sudo chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+       
+               sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+               sudo chmod +x /usr/local/bin/argocd
+               '''
             }
         }
         stage('Apply Kubernetes & Sync App with ArgoCD') {
