@@ -17,6 +17,7 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                }
             }
         }
         stage('Push Image to DockerHub') {
@@ -24,7 +25,7 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
                     docker.withRegistry('https://registry.hub.docker.com' , "${DOCKER_HUB_CREDENTIALS_ID}") {
-                       dockerImage.push("${IMAGE_TAG}")
+                        dockerImage.push("${IMAGE_TAG}")
                     }
                 }
             }
@@ -33,12 +34,12 @@ pipeline {
             steps {
                 script {
                     sh """
-                    sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+                    sed -i 's|image: rajesh79/studybuddy:.*|image: rajesh79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
                     """
                 }
             }
         }
-    
+
         stage('Commit Updated YAML') {
             steps {
                 script {
@@ -66,14 +67,13 @@ pipeline {
                 '''
             }
         }
-        
         stage('Apply Kubernetes & Sync App with ArgoCD') {
             steps {
                 script {
                     kubeconfig(credentialsId: 'kubeconfig', serverUrl: 'https://192.168.49.2:8443') {
                         sh '''
                         argocd login 34.136.219.209:31704 --username admin --password $(kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d) --insecure
-                        argocd app sync studyai
+                        argocd app sync study
                         '''
                     }
                 }
