@@ -12,32 +12,29 @@ pipeline {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-token', url: 'https://github.com/rajesh2k3/study-buddy-ai.git']])
             }
         }        
-
         stage('Build Docker Image') {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    def dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
                 }
             }
         }
-
         stage('Push Image to DockerHub') {
             steps {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
                     docker.withRegistry('https://registry.hub.docker.com' , "${DOCKER_HUB_CREDENTIALS_ID}") {
-                        docker.image("${DOCKER_HUB_REPO}:${IMAGE_TAG}").push()
+                        dockerImage.push("${IMAGE_TAG}")
                     }
                 }
             }
         }
-
         stage('Update Deployment YAML with New Tag') {
             steps {
                 script {
                     sh """
-                    sed -i 's|image: rajesh79/studybuddy:.*|image: rajesh79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
+                    sed -i 's|image: rajeshs79/studybuddy:.*|image: rajeshs79/studybuddy:${IMAGE_TAG}|' manifests/deployment.yaml
                     """
                 }
             }
@@ -48,47 +45,37 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh '''
-                        git config user.name "rajesh2k3"
+                        git config user.name "rajeshs79"
                         git config user.email "sraju2k3@gmail.com"
                         git add manifests/deployment.yaml
                         git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajesh2k3/study-buddy-ai.git HEAD:master
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/rajeshs79/study-buddy-ai.git HEAD:master
                         '''
                     }
                 }
             }
         }
-
         stage('Install Kubectl & ArgoCD CLI Setup') {
             steps {
                 sh '''
-                echo "Installing curl, Kubectl & ArgoCD cli..."
-                apt-get update || true
-                apt-get install -y --no-install-recommends gpgv curl wget
-
-                curl -LO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                chmod +x kubectl && mv kubectl /usr/local/bin/
-
+                echo 'installing Kubectl & ArgoCD cli...'
+                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                chmod +x kubectl
+                mv kubectl /usr/local/bin/kubectl
                 curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
                 chmod +x /usr/local/bin/argocd
                 '''
             }
         }
-
         stage('Apply Kubernetes & Sync App with ArgoCD') {
             steps {
-                configFileProvider([configFile(fileId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                     sh '''
-                       echo "Using kubeconfig from Jenkins secret..."
-                       kubectl version --client
-
-                       argocd login 34.136.219.209:31704 \
-                       --username admin \
-                       --password $(kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d) \
-                       --insecure
-
-                       argocd app sync studyai
-                       '''
+                script {
+                    kubeconfig(credentialsId: 'kubeconfig', serverUrl: 'https://192.168.49.2:8443') {
+                        sh '''
+                        argocd login 34.136.219.209:31704 --username admin --password $(kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d) --insecure
+                        argocd app sync studyai
+                        '''
+                    }
                 }
             }
         }
