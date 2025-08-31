@@ -89,7 +89,6 @@ pipeline {
 
                        argocd app sync studyai
                        '''
-                    }
                 }
             }
         }
